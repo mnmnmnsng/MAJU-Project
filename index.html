@@ -3,96 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MAJU MVP - 구독 기능</title>
+  <title>MAJU MVP - Auth 로그인 분리</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       color: #111;
     }
-
     .container {
       max-width: 1100px;
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
-
     .card {
       background: #fff;
       border-radius: 18px;
       padding: 20px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-    }
-
-    .sub {
-      margin: 0;
-      color: #666;
-      font-size: 14px;
-    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .sub { margin: 0; color: #666; font-size: 14px; }
 
     .layout {
       display: grid;
       grid-template-columns: 300px 1fr 300px;
       gap: 16px;
     }
-
     @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+      .layout { grid-template-columns: 1fr; }
     }
 
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 18px;
-    }
+    .section-title { margin: 0 0 12px; font-size: 18px; }
+    .pol-list, .room-list { display: flex; flex-direction: column; gap: 10px; }
 
-    .pol-list,
-    .room-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .pol-item,
-    .room-item {
+    .pol-item, .room-item {
       border: 1px solid #ddd;
       border-radius: 14px;
       padding: 14px;
       background: #fff;
     }
-
     .room-item.active {
       background: #111;
       color: #fff;
       border-color: #111;
     }
+    .room-item.active .item-meta { color: #ddd; }
 
-    .room-item.active .item-meta {
-      color: #ddd;
-    }
-
-    .item-name {
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .item-meta {
-      font-size: 13px;
-      color: #666;
-      line-height: 1.4;
-    }
+    .item-name { font-weight: 700; margin-bottom: 4px; }
+    .item-meta { font-size: 13px; color: #666; line-height: 1.4; }
 
     .action-row {
       display: flex;
@@ -108,9 +69,7 @@
       color: #444;
     }
 
-    select,
-    textarea,
-    input {
+    select, textarea, input {
       width: 100%;
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -133,18 +92,10 @@
       font-size: 14px;
       cursor: pointer;
     }
-
-    button:hover {
-      opacity: 0.92;
-    }
-
+    button:hover { opacity: 0.92; }
     button.secondary {
       background: #e9e9e9;
       color: #111;
-    }
-
-    button.full {
-      width: 100%;
     }
 
     .chat-box {
@@ -185,36 +136,9 @@
       color: #777;
     }
 
-    .notice {
-      font-size: 13px;
-      color: #666;
-      margin-top: 10px;
-    }
-
-    .status {
-      font-size: 13px;
-      color: #0a7a2f;
-      margin-top: 10px;
-    }
-
-    .error {
-      font-size: 13px;
-      color: #c62828;
-      margin-top: 10px;
-    }
-
-    .top-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    @media (max-width: 640px) {
-      .top-row {
-        grid-template-columns: 1fr;
-      }
-    }
+    .notice { font-size: 13px; color: #666; margin-top: 10px; }
+    .status { font-size: 13px; color: #0a7a2f; margin-top: 10px; }
+    .error { font-size: 13px; color: #c62828; margin-top: 10px; }
 
     .room-title {
       font-size: 20px;
@@ -236,13 +160,134 @@
       background: #f0f0f0;
       margin-bottom: 10px;
     }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .user-box {
+      font-size: 14px;
+      color: #444;
+      background: #f5f5f5;
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .auth-modal {
+      width: 100%;
+      max-width: 460px;
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+
+    .auth-title {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .auth-sub {
+      margin: 0 0 16px;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .auth-tabs button.active {
+      background: #111;
+      color: white;
+    }
+
+    .hidden { display: none; }
+
+    .field-group { margin-bottom: 12px; }
+
+    #politicianSelectWrap.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-modal">
+      <h2 class="auth-title">MAJU 로그인</h2>
+      <p class="auth-sub">
+        지지자와 정치인을 분리해서 로그인할 수 있어.<br>
+        정치인은 자기 채팅방에만 글을 보낼 수 있어.
+      </p>
+
+      <div class="auth-tabs">
+        <button id="tabSupporter" class="active" onclick="setRoleTab('supporter')">지지자</button>
+        <button id="tabPolitician" class="secondary" onclick="setRoleTab('politician')">정치인</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tabLogin" class="active" onclick="setModeTab('login')">로그인</button>
+        <button id="tabSignup" class="secondary" onclick="setModeTab('signup')">회원가입</button>
+      </div>
+
+      <div class="field-group">
+        <label for="authName">이름</label>
+        <input id="authName" placeholder="예: 최민수 / 이정민" />
+      </div>
+
+      <div class="field-group">
+        <label for="authEmail">이메일</label>
+        <input id="authEmail" type="email" placeholder="example@email.com" />
+      </div>
+
+      <div class="field-group">
+        <label for="authPassword">비밀번호</label>
+        <input id="authPassword" type="password" placeholder="비밀번호" />
+      </div>
+
+      <div id="politicianSelectWrap" class="field-group hidden">
+        <label for="authPoliticianId">정치인 계정 연결</label>
+        <select id="authPoliticianId"></select>
+      </div>
+
+      <button style="width:100%; margin-top: 8px;" onclick="handleAuthSubmit()">계속하기</button>
+      <div id="authError" class="error"></div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="card">
-      <h1>MAJU MVP</h1>
-      <p class="sub">정치인 구독 + 내 채팅방 목록 버전</p>
+      <div class="header-row">
+        <div>
+          <h1>MAJU MVP</h1>
+          <p class="sub">Firebase Auth 로그인 + 정치인/지지자 분리</p>
+        </div>
+        <div class="user-box">
+          로그인 사용자: <strong id="currentUserText">없음</strong><br>
+          역할: <strong id="currentRoleText">없음</strong>
+          <button class="secondary" style="margin-left:10px; margin-top:8px;" onclick="logoutUser()">로그아웃</button>
+        </div>
+      </div>
     </div>
 
     <div class="layout">
@@ -255,25 +300,9 @@
 
       <div>
         <div class="card">
-          <div class="top-row">
-            <div>
-              <label for="role">역할</label>
-              <select id="role">
-                <option value="supporter">지지자</option>
-                <option value="politician">정치인</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="senderName">발신자 이름</label>
-              <input id="senderName" placeholder="정치인 이름" />
-            </div>
-          </div>
-
           <div class="pill" id="roomBadge">내 채팅방</div>
           <div class="room-title" id="roomTitle">채팅방</div>
-          <div class="room-sub" id="roomSub">오른쪽 내 채팅방에서 하나를 선택해줘</div>
-
+          <div class="room-sub" id="roomSub">로그인 후 이용해줘</div>
           <div id="chat" class="chat-box"></div>
         </div>
 
@@ -282,7 +311,7 @@
           <textarea id="message" placeholder="선택한 정치인의 지지자들에게 보낼 메시지를 입력하세요"></textarea>
           <button onclick="sendMessage()">전송</button>
           <div id="status"></div>
-          <div class="notice">현재 MVP에서는 정치인만 메시지를 보낼 수 있어.</div>
+          <div class="notice" id="sendNotice">정치인 계정만 메시지를 보낼 수 있어.</div>
         </div>
       </div>
 
@@ -290,13 +319,14 @@
         <div class="card">
           <h2 class="section-title">내 채팅방</h2>
           <div id="myRooms" class="room-list"></div>
-          <div class="notice">구독한 정치인만 여기에 보여.</div>
+          <div class="notice">지지자는 구독한 정치인만, 정치인은 자기 방만 보여.</div>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
@@ -310,34 +340,39 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
     const politicians = [
-      {
-        id: "lee-jungmin",
-        name: "이정민",
-        party: "미래도시당",
-        bio: "청년 일자리와 지역 혁신"
-      },
-      {
-        id: "park-seoyun",
-        name: "박서윤",
-        party: "국민연결당",
-        bio: "주거·복지·생활 정책"
-      },
-      {
-        id: "kim-hyunjoo",
-        name: "김현주",
-        party: "새로운내일당",
-        bio: "교육·지역 균형 발전"
-      }
+      { id: "lee-jungmin", name: "이정민", party: "미래도시당", bio: "청년 일자리와 지역 혁신" },
+      { id: "park-seoyun", name: "박서윤", party: "국민연결당", bio: "주거·복지·생활 정책" },
+      { id: "kim-hyunjoo", name: "김현주", party: "새로운내일당", bio: "교육·지역 균형 발전" }
     ];
 
-    const demoUserId = "demo-user-001";
+    let authRole = "supporter";
+    let authMode = "login";
+
+    let currentUser = null;
+    let currentProfile = null;
     let selectedPoliticianId = null;
     let subscribedIds = [];
     let unsubscribeMessages = null;
     let unsubscribeSubscriptions = null;
+
+    const authOverlayEl = document.getElementById("authOverlay");
+    const authErrorEl = document.getElementById("authError");
+    const authNameEl = document.getElementById("authName");
+    const authEmailEl = document.getElementById("authEmail");
+    const authPasswordEl = document.getElementById("authPassword");
+    const authPoliticianIdEl = document.getElementById("authPoliticianId");
+    const politicianSelectWrapEl = document.getElementById("politicianSelectWrap");
+    const tabSupporterEl = document.getElementById("tabSupporter");
+    const tabPoliticianEl = document.getElementById("tabPolitician");
+    const tabLoginEl = document.getElementById("tabLogin");
+    const tabSignupEl = document.getElementById("tabSignup");
+
+    const currentUserTextEl = document.getElementById("currentUserText");
+    const currentRoleTextEl = document.getElementById("currentRoleText");
 
     const politicianListEl = document.getElementById("politicianList");
     const myRoomsEl = document.getElementById("myRooms");
@@ -345,10 +380,9 @@
     const roomSubEl = document.getElementById("roomSub");
     const roomBadgeEl = document.getElementById("roomBadge");
     const chatEl = document.getElementById("chat");
-    const roleEl = document.getElementById("role");
-    const senderNameEl = document.getElementById("senderName");
     const messageEl = document.getElementById("message");
     const statusEl = document.getElementById("status");
+    const sendNoticeEl = document.getElementById("sendNotice");
 
     function setStatus(text, isError = false) {
       statusEl.className = isError ? "error" : "status";
@@ -367,11 +401,127 @@
       return politicians.find((p) => p.id === id);
     }
 
+    function openAuth() {
+      authOverlayEl.classList.remove("hidden");
+    }
+
+    function closeAuth() {
+      authOverlayEl.classList.add("hidden");
+    }
+
+    function setRoleTab(role) {
+      authRole = role;
+      tabSupporterEl.className = role === "supporter" ? "active" : "secondary";
+      tabPoliticianEl.className = role === "politician" ? "active" : "secondary";
+      updateAuthForm();
+    }
+
+    function setModeTab(mode) {
+      authMode = mode;
+      tabLoginEl.className = mode === "login" ? "active" : "secondary";
+      tabSignupEl.className = mode === "signup" ? "active" : "secondary";
+      updateAuthForm();
+    }
+
+    function updateAuthForm() {
+      const showPoliticianPicker = authRole === "politician" && authMode === "signup";
+      politicianSelectWrapEl.className = showPoliticianPicker ? "field-group" : "field-group hidden";
+      authNameEl.disabled = authMode === "login";
+      authNameEl.placeholder = authMode === "login" ? "로그인 때는 비워둬도 돼" : "이름 입력";
+    }
+
+    function fillPoliticianSelect() {
+      authPoliticianIdEl.innerHTML = "";
+      politicians.forEach((p) => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = `${p.name} · ${p.party}`;
+        authPoliticianIdEl.appendChild(option);
+      });
+    }
+
+    async function handleAuthSubmit() {
+      const name = authNameEl.value.trim();
+      const email = authEmailEl.value.trim();
+      const password = authPasswordEl.value.trim();
+
+      authErrorEl.textContent = "";
+
+      if (!email || !password) {
+        authErrorEl.textContent = "이메일과 비밀번호를 입력해줘.";
+        return;
+      }
+
+      try {
+        if (authMode === "signup") {
+          if (!name) {
+            authErrorEl.textContent = "회원가입 시 이름을 입력해줘.";
+            return;
+          }
+
+          const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+          const user = userCredential.user;
+
+          const profile = {
+            name,
+            email,
+            role: authRole,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          if (authRole === "politician") {
+            profile.politicianId = authPoliticianIdEl.value;
+          }
+
+          await db.collection("users").doc(user.uid).set(profile);
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+
+        authNameEl.value = "";
+        authEmailEl.value = "";
+        authPasswordEl.value = "";
+      } catch (error) {
+        console.error(error);
+        authErrorEl.textContent = error.message || "로그인/회원가입에 실패했어.";
+      }
+    }
+
+    async function logoutUser() {
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function loadUserProfile(uid) {
+      const doc = await db.collection("users").doc(uid).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    }
+
+    function updateHeaderUI() {
+      currentUserTextEl.textContent = currentProfile ? currentProfile.name : "없음";
+      currentRoleTextEl.textContent = currentProfile
+        ? (currentProfile.role === "politician" ? "정치인" : "지지자")
+        : "없음";
+
+      const isPolitician = currentProfile && currentProfile.role === "politician";
+      sendNoticeEl.textContent = isPolitician
+        ? "현재 로그인한 정치인 계정으로 자기 채팅방에 메시지를 보낼 수 있어."
+        : "정치인 계정만 메시지를 보낼 수 있어.";
+    }
+
     function renderPoliticianList() {
       politicianListEl.innerHTML = "";
 
       politicians.forEach((p) => {
         const subscribed = subscribedIds.includes(p.id);
+        const isPoliticianOwner =
+          currentProfile &&
+          currentProfile.role === "politician" &&
+          currentProfile.politicianId === p.id;
 
         const item = document.createElement("div");
         item.className = "pol-item";
@@ -387,19 +537,22 @@
         const actions = document.createElement("div");
         actions.className = "action-row";
 
-        const subscribeBtn = document.createElement("button");
-        subscribeBtn.textContent = subscribed ? "구독중" : "구독하기";
-        subscribeBtn.className = subscribed ? "secondary" : "";
-        subscribeBtn.onclick = () => {
-          if (subscribed) {
-            unsubscribePolitician(p.id);
-          } else {
-            subscribePolitician(p.id);
-          }
-        };
+        if (currentProfile && currentProfile.role === "supporter") {
+          const subscribeBtn = document.createElement("button");
+          subscribeBtn.textContent = subscribed ? "구독중" : "구독하기";
+          subscribeBtn.className = subscribed ? "secondary" : "";
+          subscribeBtn.onclick = () => {
+            if (subscribed) {
+              unsubscribePolitician(p.id);
+            } else {
+              subscribePolitician(p.id);
+            }
+          };
+          actions.appendChild(subscribeBtn);
+        }
 
         const openBtn = document.createElement("button");
-        openBtn.textContent = "채팅방 보기";
+        openBtn.textContent = isPoliticianOwner ? "내 채팅방" : "채팅방 보기";
         openBtn.className = "secondary";
         openBtn.onclick = () => {
           selectedPoliticianId = p.id;
@@ -407,20 +560,46 @@
           renderRoomInfo();
           listenMessages();
         };
-
-        actions.appendChild(subscribeBtn);
         actions.appendChild(openBtn);
 
         item.appendChild(name);
         item.appendChild(meta);
         item.appendChild(actions);
-
         politicianListEl.appendChild(item);
       });
     }
 
     function renderMyRooms() {
       myRoomsEl.innerHTML = "";
+
+      if (!currentProfile) {
+        myRoomsEl.innerHTML = "<div class='notice'>로그인 후 이용해줘.</div>";
+        return;
+      }
+
+      if (currentProfile.role === "politician") {
+        const p = getPoliticianById(currentProfile.politicianId);
+        if (!p) {
+          myRoomsEl.innerHTML = "<div class='notice'>연결된 정치인 정보가 없어.</div>";
+          return;
+        }
+
+        const item = document.createElement("div");
+        item.className = "room-item active";
+
+        const name = document.createElement("div");
+        name.className = "item-name";
+        name.textContent = p.name;
+
+        const meta = document.createElement("div");
+        meta.className = "item-meta";
+        meta.textContent = `${p.party} · ${p.bio}`;
+
+        item.appendChild(name);
+        item.appendChild(meta);
+        myRoomsEl.appendChild(item);
+        return;
+      }
 
       if (subscribedIds.length === 0) {
         myRoomsEl.innerHTML = "<div class='notice'>아직 구독한 정치인이 없어.</div>";
@@ -458,19 +637,24 @@
       if (!selectedPoliticianId) {
         roomBadgeEl.textContent = "내 채팅방";
         roomTitleEl.textContent = "채팅방";
-        roomSubEl.textContent = "오른쪽 내 채팅방에서 하나를 선택해줘";
-        senderNameEl.value = "";
-        chatEl.innerHTML = "<div class='notice'>채팅방을 선택해줘.</div>";
+        roomSubEl.textContent = currentProfile ? "채팅방을 선택해줘" : "로그인 후 이용해줘";
+        chatEl.innerHTML = "<div class='notice'>" + (currentProfile ? "채팅방을 선택해줘." : "로그인 후 이용해줘.") + "</div>";
         return;
       }
 
       const p = getPoliticianById(selectedPoliticianId);
       if (!p) return;
 
-      roomBadgeEl.textContent = subscribedIds.includes(selectedPoliticianId) ? "구독 중인 채팅방" : "미리보기 채팅방";
+      if (currentProfile && currentProfile.role === "politician") {
+        roomBadgeEl.textContent = "정치인 채팅방";
+      } else if (subscribedIds.includes(selectedPoliticianId)) {
+        roomBadgeEl.textContent = "구독 중인 채팅방";
+      } else {
+        roomBadgeEl.textContent = "미리보기 채팅방";
+      }
+
       roomTitleEl.textContent = p.name + " 채팅방";
       roomSubEl.textContent = p.party + " · " + p.bio;
-      senderNameEl.value = p.name;
     }
 
     function renderMessages(docs) {
@@ -543,14 +727,15 @@
     }
 
     async function subscribePolitician(politicianId) {
+      if (!currentUser) return;
       try {
         await db
           .collection("users")
-          .doc(demoUserId)
+          .doc(currentUser.uid)
           .collection("subscriptions")
           .doc(politicianId)
           .set({
-            politicianId: politicianId,
+            politicianId,
             subscribedAt: firebase.firestore.FieldValue.serverTimestamp()
           });
       } catch (error) {
@@ -560,10 +745,11 @@
     }
 
     async function unsubscribePolitician(politicianId) {
+      if (!currentUser) return;
       try {
         await db
           .collection("users")
-          .doc(demoUserId)
+          .doc(currentUser.uid)
           .collection("subscriptions")
           .doc(politicianId)
           .delete();
@@ -577,10 +763,21 @@
       }
     }
 
-    function listenSubscriptions() {
+    function startSubscriptionsListener() {
+      if (!currentUser || !currentProfile || currentProfile.role !== "supporter") {
+        subscribedIds = [];
+        renderPoliticianList();
+        renderMyRooms();
+        renderRoomInfo();
+        listenMessages();
+        return;
+      }
+
+      if (unsubscribeSubscriptions) unsubscribeSubscriptions();
+
       unsubscribeSubscriptions = db
         .collection("users")
-        .doc(demoUserId)
+        .doc(currentUser.uid)
         .collection("subscriptions")
         .orderBy("subscribedAt", "asc")
         .onSnapshot(
@@ -608,23 +805,25 @@
     }
 
     async function sendMessage() {
-      const role = roleEl.value;
+      if (!currentUser || !currentProfile) {
+        alert("로그인 후 이용해줘.");
+        return;
+      }
+
+      if (currentProfile.role !== "politician") {
+        alert("정치인 계정만 메시지를 보낼 수 있어.");
+        return;
+      }
+
       const text = messageEl.value.trim();
-
-      if (!selectedPoliticianId) {
-        alert("채팅방을 먼저 선택해줘.");
-        return;
-      }
-
-      const senderName = senderNameEl.value.trim() || getPoliticianById(selectedPoliticianId).name;
-
-      if (role !== "politician") {
-        alert("현재 MVP에서는 정치인만 메시지를 보낼 수 있습니다.");
-        return;
-      }
-
       if (!text) {
         alert("메시지를 입력해줘.");
+        return;
+      }
+
+      const politicianId = currentProfile.politicianId;
+      if (!politicianId) {
+        alert("정치인 계정 연결 정보가 없어.");
         return;
       }
 
@@ -632,12 +831,12 @@
         setStatus("전송 중...");
         await db
           .collection("politicians")
-          .doc(selectedPoliticianId)
+          .doc(politicianId)
           .collection("messages")
           .add({
-            senderName: senderName,
-            politicianId: selectedPoliticianId,
-            text: text,
+            senderName: currentProfile.name,
+            politicianId,
+            text,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
 
@@ -649,10 +848,65 @@
       }
     }
 
-    renderPoliticianList();
-    renderMyRooms();
-    renderRoomInfo();
-    listenSubscriptions();
+    async function handleSignedInUser(user) {
+      currentUser = user;
+      currentProfile = await loadUserProfile(user.uid);
+
+      if (!currentProfile) {
+        setStatus("사용자 프로필을 찾지 못했어.", true);
+        await auth.signOut();
+        return;
+      }
+
+      if (currentProfile.role === "politician") {
+        selectedPoliticianId = currentProfile.politicianId || null;
+      } else {
+        selectedPoliticianId = null;
+      }
+
+      updateHeaderUI();
+      closeAuth();
+      renderPoliticianList();
+      renderMyRooms();
+      renderRoomInfo();
+      startSubscriptionsListener();
+    }
+
+    function resetSignedOutUI() {
+      currentUser = null;
+      currentProfile = null;
+      selectedPoliticianId = null;
+      subscribedIds = [];
+
+      if (unsubscribeMessages) unsubscribeMessages();
+      if (unsubscribeSubscriptions) unsubscribeSubscriptions();
+
+      updateHeaderUI();
+      renderPoliticianList();
+      renderMyRooms();
+      renderRoomInfo();
+      chatEl.innerHTML = "<div class='notice'>로그인 후 이용해줘.</div>";
+      openAuth();
+    }
+
+    function initApp() {
+      fillPoliticianSelect();
+      setRoleTab("supporter");
+      setModeTab("login");
+      renderPoliticianList();
+      renderMyRooms();
+      renderRoomInfo();
+
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          await handleSignedInUser(user);
+        } else {
+          resetSignedOutUI();
+        }
+      });
+    }
+
+    initApp();
   </script>
 </body>
 </html>
