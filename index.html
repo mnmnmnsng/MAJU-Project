@@ -3,104 +3,472 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MAJU MVP</title>
+  <title>MAJU MVP - 정치인별 채팅방</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 40px auto;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
       padding: 20px;
-      line-height: 1.5;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     }
+
     h1 {
-      margin-bottom: 8px;
+      margin: 0 0 8px;
+      font-size: 28px;
     }
-    .box {
+
+    .sub {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 760px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sidebar-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .pol-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pol-item {
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      background: #fff;
+      transition: 0.15s;
+    }
+
+    .pol-item:hover {
+      background: #fafafa;
+    }
+
+    .pol-item.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .pol-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .pol-meta {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .pol-item.active .pol-meta {
+      color: #ddd;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #444;
+    }
+
+    select,
+    textarea,
+    input {
+      width: 100%;
       border: 1px solid #ddd;
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 12px;
+      font-size: 14px;
+      outline: none;
     }
-    .msg {
-      background: #f3f3f3;
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin: 8px 0;
-    }
+
     textarea {
-      width: 100%;
-      height: 100px;
-      margin-top: 8px;
-      padding: 10px;
+      min-height: 120px;
+      resize: vertical;
     }
+
     button {
-      margin-top: 8px;
-      padding: 10px 16px;
       border: none;
-      border-radius: 10px;
+      background: #111;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
       cursor: pointer;
+      margin-top: 12px;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 280px;
+    }
+
+    .msg-wrap {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .msg {
+      max-width: 85%;
+      background: #f1f1f1;
+      padding: 12px 14px;
+      border-radius: 16px;
+    }
+
+    .msg-name {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .msg-text {
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .msg-time {
+      margin-top: 8px;
+      text-align: right;
+      font-size: 11px;
+      color: #777;
+    }
+
+    .notice {
+      font-size: 13px;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #0a7a2f;
+      margin-top: 10px;
+    }
+
+    .error {
+      font-size: 13px;
+      color: #c62828;
+      margin-top: 10px;
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .top-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .room-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .room-sub {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
     }
   </style>
 </head>
 <body>
-  <h1>MAJU MVP</h1>
-  <p>정치인이 지지자에게 1:다수로 메시지를 보내는 데모</p>
+  <div class="container">
+    <div class="card">
+      <h1>MAJU MVP</h1>
+      <p class="sub">정치인별 채팅방 분리 버전</p>
+    </div>
 
-  <div class="box">
-    <label for="role">역할 선택:</label>
-    <select id="role">
-      <option value="supporter">지지자</option>
-      <option value="politician">정치인</option>
-    </select>
+    <div class="layout">
+      <div class="card">
+        <h2 class="sidebar-title">정치인 목록</h2>
+        <div id="politicianList" class="pol-list"></div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="top-row">
+            <div>
+              <label for="role">역할</label>
+              <select id="role">
+                <option value="supporter">지지자</option>
+                <option value="politician">정치인</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="senderName">발신자 이름</label>
+              <input id="senderName" placeholder="정치인 이름" />
+            </div>
+          </div>
+
+          <div class="room-title" id="roomTitle">채팅방</div>
+          <div class="room-sub" id="roomSub">정치인을 선택해줘</div>
+
+          <div id="chat" class="chat-box"></div>
+        </div>
+
+        <div class="card">
+          <label for="message">메시지 보내기</label>
+          <textarea id="message" placeholder="선택한 정치인의 지지자들에게 보낼 메시지를 입력하세요"></textarea>
+          <button onclick="sendMessage()">전송</button>
+          <div id="status"></div>
+          <div class="notice">현재 MVP에서는 정치인만 메시지를 보낼 수 있어.</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="box">
-    <h3>채팅방</h3>
-    <div id="chat"></div>
-  </div>
-
-  <div class="box">
-    <h3>메시지 보내기</h3>
-    <textarea id="message" placeholder="메시지를 입력하세요"></textarea>
-    <br />
-    <button onclick="sendMessage()">전송</button>
-  </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
-    const messages = [
-      "안녕하세요. 오늘 공약 관련 의견을 받고 싶습니다.",
-      "이번 주 일정도 곧 공유드릴게요."
+    const firebaseConfig = {
+      apiKey: "AIzaSyCoSymM-VyiR-byo7ytvBlwDjD8wl6qb8E",
+      authDomain: "majumvp-30932.firebaseapp.com",
+      projectId: "majumvp-30932",
+      storageBucket: "majumvp-30932.firebasestorage.app",
+      messagingSenderId: "514523492394",
+      appId: "1:514523492394:web:4ff8a63d079963cf219353"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const politicians = [
+      {
+        id: "lee-jungmin",
+        name: "이정민",
+        party: "미래도시당",
+        bio: "청년 일자리와 지역 혁신"
+      },
+      {
+        id: "park-seoyun",
+        name: "박서윤",
+        party: "국민연결당",
+        bio: "주거·복지·생활 정책"
+      },
+      {
+        id: "kim-hyunjoo",
+        name: "김현주",
+        party: "새로운내일당",
+        bio: "교육·지역 균형 발전"
+      }
     ];
 
-    function render() {
-      const chat = document.getElementById("chat");
-      chat.innerHTML = "";
-      messages.forEach((m) => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        div.textContent = "정치인: " + m;
-        chat.appendChild(div);
+    let selectedPoliticianId = politicians[0].id;
+    let unsubscribe = null;
+
+    const politicianListEl = document.getElementById("politicianList");
+    const roomTitleEl = document.getElementById("roomTitle");
+    const roomSubEl = document.getElementById("roomSub");
+    const chatEl = document.getElementById("chat");
+    const roleEl = document.getElementById("role");
+    const senderNameEl = document.getElementById("senderName");
+    const messageEl = document.getElementById("message");
+    const statusEl = document.getElementById("status");
+
+    function setStatus(text, isError = false) {
+      statusEl.className = isError ? "error" : "status";
+      statusEl.textContent = text;
+    }
+
+    function formatTime(date) {
+      const hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const period = hours < 12 ? "오전" : "오후";
+      const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+      return `${period} ${hour12}:${minutes}`;
+    }
+
+    function getSelectedPolitician() {
+      return politicians.find((p) => p.id === selectedPoliticianId);
+    }
+
+    function renderPoliticianList() {
+      politicianListEl.innerHTML = "";
+
+      politicians.forEach((p) => {
+        const item = document.createElement("div");
+        item.className = "pol-item" + (p.id === selectedPoliticianId ? " active" : "");
+        item.onclick = () => selectPolitician(p.id);
+
+        const name = document.createElement("div");
+        name.className = "pol-name";
+        name.textContent = p.name;
+
+        const meta = document.createElement("div");
+        meta.className = "pol-meta";
+        meta.textContent = `${p.party} · ${p.bio}`;
+
+        item.appendChild(name);
+        item.appendChild(meta);
+        politicianListEl.appendChild(item);
       });
     }
 
-    function sendMessage() {
-      const role = document.getElementById("role").value;
-      const input = document.getElementById("message");
-      const text = input.value.trim();
+    function renderRoomInfo() {
+      const politician = getSelectedPolitician();
+      roomTitleEl.textContent = politician.name + " 채팅방";
+      roomSubEl.textContent = politician.party + " · " + politician.bio;
+      senderNameEl.value = politician.name;
+    }
 
-      if (!text) return;
+    function renderMessages(docs) {
+      chatEl.innerHTML = "";
+
+      if (docs.length === 0) {
+        chatEl.innerHTML = "<div class='notice'>이 채팅방에는 아직 메시지가 없어.</div>";
+        return;
+      }
+
+      docs.forEach((doc) => {
+        const data = doc.data();
+
+        const wrap = document.createElement("div");
+        wrap.className = "msg-wrap";
+
+        const box = document.createElement("div");
+        box.className = "msg";
+
+        const name = document.createElement("div");
+        name.className = "msg-name";
+        name.textContent = data.senderName || "정치인";
+
+        const text = document.createElement("div");
+        text.className = "msg-text";
+        text.textContent = data.text || "";
+
+        const time = document.createElement("div");
+        time.className = "msg-time";
+        if (data.createdAt && data.createdAt.toDate) {
+          time.textContent = formatTime(data.createdAt.toDate());
+        } else {
+          time.textContent = "방금 전";
+        }
+
+        box.appendChild(name);
+        box.appendChild(text);
+        box.appendChild(time);
+        wrap.appendChild(box);
+        chatEl.appendChild(wrap);
+      });
+    }
+
+    function listenMessages() {
+      if (unsubscribe) unsubscribe();
+
+      setStatus("메시지 불러오는 중...");
+      chatEl.innerHTML = "<div class='notice'>불러오는 중...</div>";
+
+      unsubscribe = db
+        .collection("politicians")
+        .doc(selectedPoliticianId)
+        .collection("messages")
+        .orderBy("createdAt", "asc")
+        .onSnapshot(
+          (snapshot) => {
+            renderMessages(snapshot.docs);
+            setStatus("불러오기 완료");
+          },
+          (error) => {
+            console.error(error);
+            setStatus("메시지를 불러오지 못했어. Firestore 설정을 확인해줘.", true);
+          }
+        );
+    }
+
+    function selectPolitician(id) {
+      selectedPoliticianId = id;
+      renderPoliticianList();
+      renderRoomInfo();
+      listenMessages();
+    }
+
+    async function sendMessage() {
+      const role = roleEl.value;
+      const text = messageEl.value.trim();
+      const senderName = senderNameEl.value.trim() || getSelectedPolitician().name;
 
       if (role !== "politician") {
         alert("현재 MVP에서는 정치인만 메시지를 보낼 수 있습니다.");
         return;
       }
 
-      messages.push(text);
-      input.value = "";
-      render();
+      if (!text) {
+        alert("메시지를 입력해줘.");
+        return;
+      }
+
+      try {
+        setStatus("전송 중...");
+        await db
+          .collection("politicians")
+          .doc(selectedPoliticianId)
+          .collection("messages")
+          .add({
+            senderName: senderName,
+            politicianId: selectedPoliticianId,
+            text: text,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        messageEl.value = "";
+        setStatus("전송 완료");
+      } catch (error) {
+        console.error(error);
+        setStatus("전송 실패. Firebase 설정이나 권한을 확인해줘.", true);
+      }
     }
 
-    render();
+    renderPoliticianList();
+    renderRoomInfo();
+    listenMessages();
   </script>
 </body>
 </html>
