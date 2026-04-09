@@ -265,10 +265,22 @@
         <input id="authPassword" type="password" placeholder="비밀번호" />
       </div>
 
-      <div id="politicianSelectWrap" class="field-group hidden">
-        <label for="authPoliticianId">정치인 계정 연결</label>
-        <select id="authPoliticianId"></select>
-      </div>
+      <div id="politicianCreateWrap" class="hidden">
+      <div class="field-group">
+    <label for="authPoliticianId">정치인 아이디</label>
+    <input id="authPoliticianId" placeholder="예: lee-jaemyung" />
+  </div>
+
+  <div class="field-group">
+    <label for="authParty">정당</label>
+    <input id="authParty" placeholder="예: 더불어민주당" />
+  </div>
+
+  <div class="field-group">
+    <label for="authBio">소개</label>
+    <input id="authBio" placeholder="예: 청년·민생·지역 균형 발전" />
+  </div>
+</div>
 
       <button style="width:100%; margin-top: 8px;" onclick="handleAuthSubmit()">계속하기</button>
       <div id="authError" class="error"></div>
@@ -313,6 +325,12 @@
           <div id="status"></div>
           <div class="notice" id="sendNotice">정치인 계정만 메시지를 보낼 수 있어.</div>
         </div>
+        <div class="card">
+          <label for="questionInput">질문 보내기</label>
+          <textarea id="questionInput" placeholder="정치인에게 보낼 질문을 입력하세요"></textarea>
+          <button onclick="sendQuestion()">질문 보내기</button>
+          <div id="questionStatus"></div>
+      </div>
       </div>
 
       <div>
@@ -321,6 +339,12 @@
           <div id="myRooms" class="room-list"></div>
           <div class="notice">지지자는 구독한 정치인만, 정치인은 자기 방만 보여.</div>
         </div>
+        <div class="card">
+          <h2 class="section-title">질문함</h2>
+          <div id="questionList" class="room-list"></div>
+          <div class="notice" id="questionNotice">지지자는 질문을 보낼 수 있고, 정치인은 질문을 확인할 수 있어.
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -343,11 +367,9 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const politicians = [
-      { id: "lee-jungmin", name: "이정민", party: "미래도시당", bio: "청년 일자리와 지역 혁신" },
-      { id: "park-seoyun", name: "박서윤", party: "국민연결당", bio: "주거·복지·생활 정책" },
-      { id: "kim-hyunjoo", name: "김현주", party: "새로운내일당", bio: "교육·지역 균형 발전" }
-    ];
+    let politicians = [];
+    let unsubscribePoliticians = null;
+    let unsubscribeQuestions = null;
 
     let authRole = "supporter";
     let authMode = "login";
@@ -365,12 +387,16 @@
     const authEmailEl = document.getElementById("authEmail");
     const authPasswordEl = document.getElementById("authPassword");
     const authPoliticianIdEl = document.getElementById("authPoliticianId");
-    const politicianSelectWrapEl = document.getElementById("politicianSelectWrap");
+    const authPartyEl = document.getElementById("authParty");
+    const authBioEl = document.getElementById("authBio");
+    const politicianCreateWrapEl = document.getElementById("politicianCreateWrap");
     const tabSupporterEl = document.getElementById("tabSupporter");
     const tabPoliticianEl = document.getElementById("tabPolitician");
     const tabLoginEl = document.getElementById("tabLogin");
     const tabSignupEl = document.getElementById("tabSignup");
-
+    const questionInputEl = document.getElementById("questionInput");
+    const questionStatusEl = document.getElementById("questionStatus");
+    const questionListEl = document.getElementById("questionList");
     const currentUserTextEl = document.getElementById("currentUserText");
     const currentRoleTextEl = document.getElementById("currentRoleText");
 
@@ -388,7 +414,10 @@
       statusEl.className = isError ? "error" : "status";
       statusEl.textContent = text;
     }
-
+    function setQuestionStatus(text, isError = false) {
+      questionStatusEl.className = isError ? "error" : "status";
+      questionStatusEl.textContent = text;
+}
     function formatTime(date) {
       const hours = date.getHours();
       const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -424,21 +453,55 @@
     }
 
     function updateAuthForm() {
-      const showPoliticianPicker = authRole === "politician" && authMode === "signup";
-      politicianSelectWrapEl.className = showPoliticianPicker ? "field-group" : "field-group hidden";
+      const showPoliticianCreate = authRole === "politician" && authMode === "signup";
+      politicianCreateWrapEl.className = showPoliticianCreate ? "" : "hidden";
       authNameEl.disabled = authMode === "login";
       authNameEl.placeholder = authMode === "login" ? "로그인 때는 비워둬도 돼" : "이름 입력";
     }
+async function seedInitialPoliticians() {
+  const snapshot = await db.collection("politicians").get();
+  if (!snapshot.empty) return;
 
-    function fillPoliticianSelect() {
-      authPoliticianIdEl.innerHTML = "";
-      politicians.forEach((p) => {
-        const option = document.createElement("option");
-        option.value = p.id;
-        option.textContent = `${p.name} · ${p.party}`;
-        authPoliticianIdEl.appendChild(option);
-      });
+  const seedData = [
+    {
+      id: "lee-jaemyung",
+      name: "이재명",
+      party: "더불어민주당",
+      bio: "민생·경제·지역 균형 발전"
+    },
+    {
+      id: "oh-sehoon",
+      name: "오세훈",
+      party: "국민의힘",
+      bio: "도시 정책·주택·서울 시정"
+    },
+    {
+      id: "ahn-cheolsu",
+      name: "안철수",
+      party: "국민의힘",
+      bio: "과학기술·교육·미래 산업"
     }
+  ];
+
+  for (const item of seedData) {
+    await db.collection("politicians").doc(item.id).set(item);
+  }
+}
+
+function startPoliticiansListener() {
+  if (unsubscribePoliticians) unsubscribePoliticians();
+
+  unsubscribePoliticians = db.collection("politicians").onSnapshot((snapshot) => {
+    politicians = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    renderPoliticianList();
+    renderMyRooms();
+    renderRoomInfo();
+  });
+}
 
     async function handleAuthSubmit() {
       const name = authNameEl.value.trim();
@@ -470,7 +533,22 @@
           };
 
           if (authRole === "politician") {
-            profile.politicianId = authPoliticianIdEl.value;
+            const politicianId = authPoliticianIdEl.value.trim();
+            const party = authPartyEl.value.trim();
+            const bio = authBioEl.value.trim();
+
+            if (!politicianId || !party || !bio) {
+              authErrorEl.textContent = "정치인 아이디, 정당, 소개를 다 입력해줘.";
+              return;
+            }
+
+            profile.politicianId = politicianId;
+
+            await db.collection("politicians").doc(politicianId).set({
+              name,
+              party,
+              bio
+            });
           }
 
           await db.collection("users").doc(user.uid).set(profile);
@@ -659,7 +737,70 @@
 
     function renderMessages(docs) {
       chatEl.innerHTML = "";
+    function renderQuestions(docs) {
+  questionListEl.innerHTML = "";
 
+  if (!currentProfile) {
+    questionListEl.innerHTML = "<div class='notice'>로그인 후 이용해줘.</div>";
+    return;
+  }
+
+  if (docs.length === 0) {
+    questionListEl.innerHTML = "<div class='notice'>아직 질문이 없어.</div>";
+    return;
+  }
+
+  docs.forEach((doc) => {
+    const data = doc.data();
+
+    const item = document.createElement("div");
+    item.className = "room-item";
+
+    const name = document.createElement("div");
+    name.className = "item-name";
+    name.textContent =
+      currentProfile.role === "politician"
+        ? (data.supporterName || "익명 지지자")
+        : "내가 보낸 질문";
+
+    const meta = document.createElement("div");
+    meta.className = "item-meta";
+    meta.textContent = data.text || "";
+
+    item.appendChild(name);
+    item.appendChild(meta);
+    questionListEl.appendChild(item);
+  });
+}
+
+function listenQuestions() {
+  if (unsubscribeQuestions) unsubscribeQuestions();
+
+  if (!currentProfile || !selectedPoliticianId) {
+    questionListEl.innerHTML = "<div class='notice'>채팅방을 선택해줘.</div>";
+    return;
+  }
+
+  let query = db
+    .collection("politicians")
+    .doc(selectedPoliticianId)
+    .collection("questions")
+    .orderBy("createdAt", "desc");
+
+  if (currentProfile.role === "supporter") {
+    query = query.where("supporterUid", "==", currentUser.uid);
+  }
+
+  unsubscribeQuestions = query.onSnapshot(
+    (snapshot) => {
+      renderQuestions(snapshot.docs);
+    },
+    (error) => {
+      console.error(error);
+      questionListEl.innerHTML = "<div class='error'>질문을 불러오지 못했어.</div>";
+    }
+  );
+}
       if (docs.length === 0) {
         chatEl.innerHTML = "<div class='notice'>이 채팅방에는 아직 메시지가 없어.</div>";
         return;
@@ -809,7 +950,49 @@
         alert("로그인 후 이용해줘.");
         return;
       }
+    async function sendQuestion() {
+  if (!currentUser || !currentProfile) {
+    alert("로그인 후 이용해줘.");
+    return;
+  }
 
+  if (currentProfile.role !== "supporter") {
+    alert("지지자 계정만 질문을 보낼 수 있어.");
+    return;
+  }
+
+  if (!selectedPoliticianId) {
+    alert("질문을 보낼 채팅방을 먼저 선택해줘.");
+    return;
+  }
+
+  const text = questionInputEl.value.trim();
+  if (!text) {
+    alert("질문을 입력해줘.");
+    return;
+  }
+
+  try {
+    setQuestionStatus("질문 전송 중...");
+    await db
+      .collection("politicians")
+      .doc(selectedPoliticianId)
+      .collection("questions")
+      .add({
+        supporterUid: currentUser.uid,
+        supporterName: currentProfile.name,
+        text,
+        status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    questionInputEl.value = "";
+    setQuestionStatus("질문 전송 완료");
+  } catch (error) {
+    console.error(error);
+    setQuestionStatus("질문 전송 실패", true);
+  }
+}
       if (currentProfile.role !== "politician") {
         alert("정치인 계정만 메시지를 보낼 수 있어.");
         return;
@@ -910,3 +1093,4 @@
   </script>
 </body>
 </html>
+#12번 부터 하기
