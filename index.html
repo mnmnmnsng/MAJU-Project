@@ -1,0 +1,349 @@
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Bell, Lock, MessageCircle, Send, UserPlus, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+
+/**
+ * MAJU MVP Demo
+ * - Firebase 붙이기 전, 동작 흐름 먼저 확인하는 웹앱 데모
+ * - 정치인 1:N 메시지를 지지자 화면에서는 1:1 DM처럼 보이게 구성
+ * - 현재는 프론트 데모 상태이며, 새로고침하면 데이터는 초기화됨
+ */
+
+type Role = "supporter" | "politician";
+
+type Politician = {
+  id: string;
+  name: string;
+  party: string;
+  bio: string;
+  subscribers: number;
+};
+
+type BroadcastMessage = {
+  id: string;
+  politicianId: string;
+  text: string;
+  createdAt: string;
+};
+
+const politicianSeed: Politician[] = [
+  {
+    id: "p1",
+    name: "이정민",
+    party: "미래도시당",
+    bio: "청년 일자리와 지역 혁신을 이야기합니다.",
+    subscribers: 1824,
+  },
+  {
+    id: "p2",
+    name: "박서윤",
+    party: "국민연결당",
+    bio: "주거·복지·생활 정책 중심으로 소통합니다.",
+    subscribers: 956,
+  },
+];
+
+const messageSeed: BroadcastMessage[] = [
+  {
+    id: "m1",
+    politicianId: "p1",
+    text: "안녕하세요. 오늘은 청년 창업 지원 정책 초안을 공유드리려고 해요.",
+    createdAt: "오전 9:10",
+  },
+  {
+    id: "m2",
+    politicianId: "p1",
+    text: "이번 주에는 왕십리 쪽에서 간담회를 진행할 예정입니다. 의견 있으시면 남겨주세요.",
+    createdAt: "오후 1:42",
+  },
+  {
+    id: "m3",
+    politicianId: "p2",
+    text: "월세 부담 완화 관련 공약 정리본을 곧 올릴게요.",
+    createdAt: "오후 3:08",
+  },
+];
+
+function formatNow() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const period = hours < 12 ? "오전" : "오후";
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${period} ${hour12}:${minutes}`;
+}
+
+export default function MajuMvpApp() {
+  const [role, setRole] = useState<Role>("supporter");
+  const [politicians, setPoliticians] = useState<Politician[]>(politicianSeed);
+  const [messages, setMessages] = useState<BroadcastMessage[]>(messageSeed);
+  const [selectedPoliticianId, setSelectedPoliticianId] = useState<string>("p1");
+  const [subscriptions, setSubscriptions] = useState<string[]>(["p1"]);
+  const [composer, setComposer] = useState("");
+  const [supporterName] = useState("최민수");
+
+  const visiblePoliticians = useMemo(() => {
+    if (role === "politician") return politicians;
+    return politicians.filter((p) => subscriptions.includes(p.id));
+  }, [role, politicians, subscriptions]);
+
+  const selectedPolitician = useMemo(() => {
+    const pool = role === "politician" ? politicians : visiblePoliticians;
+    return pool.find((p) => p.id === selectedPoliticianId) ?? pool[0] ?? politicians[0];
+  }, [role, politicians, visiblePoliticians, selectedPoliticianId]);
+
+  const roomMessages = useMemo(() => {
+    if (!selectedPolitician) return [];
+    return messages.filter((m) => m.politicianId === selectedPolitician.id);
+  }, [messages, selectedPolitician]);
+
+  const handleSubscribe = (politicianId: string) => {
+    if (subscriptions.includes(politicianId)) return;
+    setSubscriptions((prev) => [...prev, politicianId]);
+    setSelectedPoliticianId(politicianId);
+  };
+
+  const handleSendBroadcast = () => {
+    if (!selectedPolitician || !composer.trim()) return;
+    const newMessage: BroadcastMessage = {
+      id: crypto.randomUUID(),
+      politicianId: selectedPolitician.id,
+      text: composer.trim(),
+      createdAt: formatNow(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    setComposer("");
+  };
+
+  const handleSwitchRole = (nextRole: Role) => {
+    setRole(nextRole);
+    if (nextRole === "supporter") {
+      const firstSubscribed = politicians.find((p) => subscriptions.includes(p.id));
+      if (firstSubscribed) setSelectedPoliticianId(firstSubscribed.id);
+    } else {
+      setSelectedPoliticianId(politicians[0]?.id ?? "");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm"
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Badge className="rounded-full">MAJU MVP</Badge>
+                <Badge variant="secondary" className="rounded-full">정치인 1:N 채팅</Badge>
+              </div>
+              <h1 className="text-3xl font-semibold tracking-tight">정치인과 지지자가 더 가깝게 소통하는 웹앱</h1>
+              <p className="mt-2 text-sm text-zinc-600">
+                지금은 기능 흐름을 먼저 확인하는 데모 버전이야. 이후 Firebase를 붙이면 실제 서비스 형태로 확장할 수 있어.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-2xl bg-zinc-100 p-1">
+              <Button
+                variant={role === "supporter" ? "default" : "ghost"}
+                className="rounded-2xl"
+                onClick={() => handleSwitchRole("supporter")}
+              >
+                지지자 화면
+              </Button>
+              <Button
+                variant={role === "politician" ? "default" : "ghost"}
+                className="rounded-2xl"
+                onClick={() => handleSwitchRole("politician")}
+              >
+                정치인 화면
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)_320px]">
+          <Card className="rounded-3xl border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="h-5 w-5" />
+                {role === "supporter" ? "내가 구독한 정치인" : "정치인 목록"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(role === "supporter" ? visiblePoliticians : politicians).map((p) => {
+                const isActive = selectedPolitician?.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPoliticianId(p.id)}
+                    className={`w-full rounded-2xl border p-4 text-left transition ${
+                      isActive ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-semibold">{p.name}</div>
+                        <div className={`text-sm ${isActive ? "text-zinc-300" : "text-zinc-500"}`}>{p.party}</div>
+                      </div>
+                      <Badge variant={isActive ? "secondary" : "outline"} className="rounded-full">
+                        {p.subscribers.toLocaleString()}명
+                      </Badge>
+                    </div>
+                    <p className={`mt-3 text-sm ${isActive ? "text-zinc-200" : "text-zinc-600"}`}>{p.bio}</p>
+                  </button>
+                );
+              })}
+
+              {role === "supporter" && visiblePoliticians.length === 0 && (
+                <div className="rounded-2xl border border-dashed p-5 text-sm text-zinc-500">
+                  아직 구독한 정치인이 없어. 오른쪽 추천 목록에서 먼저 구독해봐.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl border-0 shadow-sm">
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-xl">
+                    {selectedPolitician ? `${selectedPolitician.name} ${role === "supporter" ? "님과의 채팅" : "메시지 발송"}` : "채팅방"}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {role === "supporter"
+                      ? `${supporterName}님에게는 개인 DM처럼 보이는 화면`
+                      : "보낸 메시지가 모든 구독자 화면에 동시에 반영되는 구조"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-zinc-500">
+                  <Lock className="h-4 w-4" />
+                  캡처 방지 기능은 추후 추가
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="flex min-h-[620px] flex-col justify-between p-0">
+              <div className="flex-1 space-y-4 overflow-auto p-6">
+                {roomMessages.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                    아직 메시지가 없어.
+                  </div>
+                ) : (
+                  roomMessages.map((message) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-start"
+                    >
+                      <div className="max-w-[85%] rounded-3xl bg-zinc-100 px-4 py-3">
+                        <div className="mb-1 text-xs text-zinc-500">{selectedPolitician?.name}</div>
+                        <div className="whitespace-pre-wrap text-sm leading-6 text-zinc-900">{message.text}</div>
+                        <div className="mt-2 text-right text-xs text-zinc-500">{message.createdAt}</div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+
+              {role === "politician" ? (
+                <div className="border-t p-4">
+                  <div className="space-y-3 rounded-3xl bg-zinc-50 p-3">
+                    <Textarea
+                      value={composer}
+                      onChange={(e) => setComposer(e.target.value)}
+                      placeholder="지지자들에게 보낼 메시지를 입력해줘"
+                      className="min-h-[120px] rounded-2xl border-0 bg-white"
+                    />
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm text-zinc-500">
+                        이 메시지는 구독자 각자의 채팅방에 개인 메시지처럼 노출돼.
+                      </div>
+                      <Button className="rounded-2xl" onClick={handleSendBroadcast}>
+                        <Send className="mr-2 h-4 w-4" />
+                        전체 발송
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t p-4">
+                  <div className="flex items-center gap-3 rounded-3xl bg-zinc-50 p-3 text-sm text-zinc-500">
+                    <MessageCircle className="h-4 w-4" />
+                    현재 MVP에서는 지지자 답장은 막아두고, 추후 좋아요·투표·질문 기능으로 확장 가능
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-6">
+            <Card className="rounded-3xl border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Bell className="h-5 w-5" />
+                  핵심 포인트
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-zinc-600">
+                <div className="rounded-2xl bg-zinc-50 p-4">정치인은 한 번만 쓰고, 지지자는 1:1 DM처럼 받는 경험을 만드는 게 핵심이야.</div>
+                <div className="rounded-2xl bg-zinc-50 p-4">이 구조는 Firebase Auth + Firestore + Cloud Functions 조합으로 구현 가능해.</div>
+                <div className="rounded-2xl bg-zinc-50 p-4">지금은 프론트 흐름만 만든 상태라서, 다음 단계는 실제 데이터 연결이야.</div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <UserPlus className="h-5 w-5" />
+                  추천 정치인
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {politicians.map((p) => {
+                  const alreadySubscribed = subscriptions.includes(p.id);
+                  return (
+                    <div key={p.id} className="rounded-2xl border border-zinc-200 p-4">
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="mt-1 text-sm text-zinc-500">{p.party}</div>
+                      <p className="mt-3 text-sm text-zinc-600">{p.bio}</p>
+                      <Button
+                        className="mt-4 w-full rounded-2xl"
+                        variant={alreadySubscribed ? "secondary" : "default"}
+                        onClick={() => handleSubscribe(p.id)}
+                        disabled={alreadySubscribed}
+                      >
+                        {alreadySubscribed ? "구독 중" : "구독하기"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">다음 개발 순서</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm text-zinc-600">
+                <div>1. Firebase 프로젝트 생성</div>
+                <div>2. 로그인 붙이기</div>
+                <div>3. Firestore에 정치인/구독/메시지 저장</div>
+                <div>4. 실제 발송 로직 연결</div>
+                <div>5. 관리자 화면 분리</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
